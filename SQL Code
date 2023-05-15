@@ -34,3 +34,53 @@ From portfolioProject..CovidDeaths
 Where location like '%states%'
 Group by location, population
 order by 1,2
+
+
+-- Showing countries with higest death count per population
+
+SELECT location, MAX(cast(total_deaths as int)) as TotalDeathCount
+From portfolioProject..CovidDeaths
+--Where location like '%states%'
+Where continent is not null
+Group by location
+order by TotalDeathCount desc
+
+-- LET'S BREAK THINGS DOWN BY CONTINENT
+
+SELECT location, MAX(cast(total_deaths as int)) as TotalDeathCount
+From portfolioProject..CovidDeaths
+--Where location like '%states%'
+Where continent is null
+Group by location
+order by TotalDeathCount desc
+
+-- or 
+
+SELECT continent, MAX(cast(total_deaths as int)) as TotalDeathCount
+From portfolioProject..CovidDeaths
+--Where location like '%states%'
+Where continent is not null
+Group by continent
+order by TotalDeathCount desc
+
+-- Beaking down global numbers
+
+SELECT date,SUM(new_cases) as totalCases, SUM(new_deaths) as TotalDeaths, (SUM(new_deaths)/ SUM(new_cases)) *100 as DeathPercentage
+From portfolioProject..CovidDeaths
+--Where location like '%states%'
+Where continent is not null and new_cases <> 0
+Group by date
+order by 1
+
+
+
+-- Looking at Total Population vs Vaccinations 
+
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(CAST(new_vaccinations as float)) OVER (Partition by dea.location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+Where dea.continent is not null 
+ Order by 2,3
