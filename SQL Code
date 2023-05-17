@@ -84,3 +84,48 @@ Join PortfolioProject..CovidVaccinations vac
 	and dea.date = vac.date
 Where dea.continent is not null 
  Order by 2,3
+ 
+  -- As CTE
+
+ With PopvsVac (continetn, location, date, population, new_vaccinations, RollingPeopleVaccinated)
+ as
+ (
+ SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(CAST(new_vaccinations as float)) OVER (Partition by dea.location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+Where dea.continent is not null and new_vaccinations is not null
+)
+select *, (RollingPeopleVaccinated/population)*100 as PercentVaccinated
+From PopvsVac
+ Order by 2,3
+
+
+ -- Temp Table
+
+ DROP table if exists #PercentPopulationVaccinated
+ Create Table #PercentPopulationVaccinated
+ (
+ Continent nvarchar(255),
+ Location nvarchar(255),
+ Date  date,
+ Population numeric,
+ New_Vaccinations numeric,
+ RollingPeopleVaccinated numeric
+ )
+
+Insert into #PercentPopulationVaccinated
+  SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(CAST(new_vaccinations as float)) OVER (Partition by dea.location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+Where dea.continent is not null and new_vaccinations is not null
+Order by 2,3
+
+
+select *, (RollingPeopleVaccinated/population)*100 as PercentVaccinated
+From #PercentPopulationVaccinated
